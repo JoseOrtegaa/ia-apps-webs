@@ -4,7 +4,7 @@ Base para crear micro apps web responsive, visualmente cuidadas y funcionales co
 
 ## Estado inicial
 
-Contextos y plantilla preparados. No hay apps, backend, servicios facturables ni credenciales configurados. Repositorio público creado en `JoseOrtegaa/ia-apps-webs`. Activación de Pages pendiente de verificar.
+Contextos y plantilla preparados. No hay apps, backend, servicios facturables ni credenciales configurados. Repositorio público creado en `JoseOrtegaa/ia-apps-webs`. Pages activo y portada verificada el 2026-10-06 (Europe/Madrid): https://joseortegaa.github.io/ia-apps-webs/.
 
 ## Estructura
 
@@ -27,11 +27,11 @@ Prompt reutilizable:
 
 ## Publicación de pruebas
 
-Una vez creado el repositorio público, configurar **Settings → Pages → Deploy from a branch → main → /docs**. `docs/index.html` es la portada inicial; `.nojekyll` evita procesamiento Jekyll. No hace falta un workflow personalizado para esta base estática.
+Configuración activa: **Settings → Pages → Deploy from a branch → main → /docs**. `docs/index.html` es la portada inicial; `.nojekyll` evita procesamiento Jekyll. No hace falta un workflow personalizado para esta base estática.
 
 Cada app publicará únicamente su salida frontend en `docs/<slug>/`. Para Vite, configurar `base: '/ia-apps-webs/<slug>/'` y copiar la salida de build a esa carpeta sin borrar otras apps. Preferir navegación hash si hay rutas SPA; verificar recargas y assets. No publicar fuentes del backend, secretos ni archivos `.env` en `docs/`.
 
-La dirección prevista tras activar y verificar Pages es `https://joseortegaa.github.io/ia-apps-webs/`. Cada app tendrá la subruta correspondiente. Pages aloja contenido estático: el backend requiere otro proveedor y cumplir `COSTES.md`.
+La portada publicada y verificada está en `https://joseortegaa.github.io/ia-apps-webs/`. Cada app tendrá la subruta correspondiente. Pages aloja contenido estático: el backend requiere otro proveedor y cumplir `COSTES.md`.
 
 Fuentes de despliegue verificadas el 2026-10-05:
 - https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site
@@ -40,3 +40,4 @@ Fuentes de despliegue verificadas el 2026-10-05:
 ## Apps
 
 Todavía no hay apps. Añadir aquí nombre, descripción y enlace verificado al publicar la primera.
+

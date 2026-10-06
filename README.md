@@ -2,9 +2,9 @@
 
 Base para crear micro apps web responsive, visualmente cuidadas y funcionales con un workflow ligero de un solo agente.
 
-## Estado inicial
+## Estado
 
-Contextos y plantilla preparados. No hay apps, backend, servicios facturables ni credenciales configurados. Repositorio público creado en `JoseOrtegaa/ia-apps-webs`. Pages activo y portada verificada el 2026-10-06 (Europe/Madrid): https://joseortegaa.github.io/ia-apps-webs/.
+MyTools es la primera micro-app: 11 herramientas PDF con procesamiento local. Contextos y plantilla disponibles para futuras apps; sin backend ni servicios facturables. Repositorio público creado en `JoseOrtegaa/ia-apps-webs`. Pages activo y portada verificada el 2026-10-06 (Europe/Madrid): https://joseortegaa.github.io/ia-apps-webs/.
 
 ## Estructura
 
@@ -39,5 +39,7 @@ Fuentes de despliegue verificadas el 2026-10-05:
 
 ## Apps
 
-Todavía no hay apps. Añadir aquí nombre, descripción y enlace verificado al publicar la primera.
+| App | Descripción | Demo |
+| --- | --- | --- |
+| MyTools | Herramientas de archivos; MVP con 11 utilidades PDF, 100 % local | [Abrir MyTools](https://joseortegaa.github.io/ia-apps-webs/mytools/) |
 

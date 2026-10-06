@@ -16,3 +16,5 @@ Español, fondo marfil, verde oscuro y coral. Sin emojis. Iconos SVG. Tres colum
 
 ## Continuidad
 Primera versión: Huroner Survivor, Ferret Jump y MyTools. El crecimiento del catálogo se hace añadiendo datos y una miniatura; mantener datos separados de presentación. Futuras cuentas/clientes solo con alcance explícito, sin implementar interfaces ficticias ni abstracciones preventivas. Gasto autorizado: 0 €.
+
+QA local y publicado completado el 2026-10-06 en Chromium a 1440/390/320 px: filtros, vacío, teclado, imágenes, enlaces y ausencia de errores/overflow. Safari físico no probado. URL: https://joseortegaa.github.io/ia-apps-webs/koi-store/ . Siguiente paso: incorporar proyectos bajo petición.

@@ -4,7 +4,7 @@ Base para crear micro apps web responsive, visualmente cuidadas y funcionales co
 
 ## Estado
 
-MyTools es la primera micro-app: 11 herramientas PDF con procesamiento local. Contextos y plantilla disponibles para futuras apps; sin backend ni servicios facturables. Repositorio público creado en `JoseOrtegaa/ia-apps-webs`. Pages activo y portada verificada el 2026-10-06 (Europe/Madrid): https://joseortegaa.github.io/ia-apps-webs/.
+Koi Store reúne juegos y apps en un catálogo público estático. MyTools: 11 herramientas PDF con procesamiento local. Contextos y plantilla disponibles para futuras apps; sin backend ni servicios facturables. Repositorio público creado en `JoseOrtegaa/ia-apps-webs`. Pages activo y portada verificada el 2026-10-06 (Europe/Madrid): https://joseortegaa.github.io/ia-apps-webs/.
 
 ## Estructura
 
@@ -43,3 +43,5 @@ Fuentes de despliegue verificadas el 2026-10-05:
 | --- | --- | --- |
 | MyTools | Herramientas de archivos; MVP con 11 utilidades PDF, 100 % local | [Abrir MyTools](https://joseortegaa.github.io/ia-apps-webs/mytools/) |
 
+
+| Koi Store | Catálogo público de juegos y apps, con búsqueda y miniaturas reales | [Abrir Koi Store](https://joseortegaa.github.io/ia-apps-webs/koi-store/) |

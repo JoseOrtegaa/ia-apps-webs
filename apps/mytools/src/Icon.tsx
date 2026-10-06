@@ -1,4 +1,6 @@
 const paths: Record<string, string> = {
+  pen: "M4 20l4-1L20 7l-3-3L5 16z M14 7l3 3 M4 22h16",
+  text: "M4 5h16 M12 5v15 M8 20h8",
   plus: "M12 5v14 M5 12h14",
   image: "M4 4h16v16H4z M4 15l5-5 4 4 3-3 4 4 M15 8h.01",
   scan: "M8 3H3v5 M16 3h5v5 M21 16v5h-5 M8 21H3v-5 M7 8h10v8H7z",

@@ -1835,3 +1835,247 @@ h3 {
     animation-duration: 2s !important;
   }
 }
+/* Shared document tools, retaining the existing mint / cream visual system. */
+textarea {
+  font: inherit;
+  resize: vertical;
+}
+textarea:focus-visible {
+  outline: 3px solid #4d9c86;
+  outline-offset: 3px;
+}
+.tone-Plantillas .tool-icon {
+  background: #f5ead8;
+  color: #8b6538;
+}
+.document-workspace {
+  padding-bottom: 56px;
+}
+.editor-intro {
+  margin: 24px 0;
+  max-width: 780px;
+}
+.document-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 350px) minmax(0, 1fr);
+  gap: 28px;
+  margin-top: 24px;
+  align-items: start;
+}
+.editor-controls {
+  padding: 24px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  min-width: 0;
+}
+.editor-controls h2,
+.editor-preview h2 {
+  font-size: 23px;
+}
+.document-workspace label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 16px 0;
+  min-width: 0;
+}
+.document-workspace input:not([type="range"]),
+.document-workspace select,
+.document-workspace textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 10px;
+  color: #203b35;
+  background: #fff;
+  border: 1px solid #bacbc1;
+  border-radius: 7px;
+  font-size: 16px;
+  font-weight: 400;
+}
+.document-workspace input[type="file"] {
+  max-width: 100%;
+  padding: 9px;
+}
+.document-workspace input[type="range"] {
+  width: 100%;
+  min-height: 44px;
+  accent-color: var(--green);
+}
+.document-workspace input[type="color"] {
+  padding: 4px;
+}
+.document-workspace .file-picker {
+  max-width: 500px;
+}
+.document-workspace .small {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+.editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin: 18px 0;
+}
+.editor-actions h2 {
+  margin: 0 auto 0 0;
+}
+.control-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.block-controls {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  margin: 20px 0;
+  padding: 14px;
+}
+.block-controls legend {
+  font-size: 14px;
+  padding: 0 7px;
+}
+.signature-pad canvas {
+  width: 100%;
+  aspect-ratio: 800/280;
+  display: block;
+  background: #fbfcf8;
+  border: 1px dashed #769989;
+  border-radius: 8px;
+  touch-action: none;
+}
+.preview-shell {
+  background: #e9ede7;
+  border: 1px solid var(--border);
+  padding: 14px;
+  border-radius: 12px;
+  min-height: 240px;
+}
+.pdf-stage {
+  position: relative;
+  width: 100%;
+  background: white;
+  box-shadow: 0 3px 12px #203b3515;
+}
+.pdf-stage > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+}
+.placement {
+  position: absolute;
+  border: 1px dashed #326b58;
+  background: transparent;
+  padding: 0;
+  border-radius: 2px;
+  touch-action: none;
+  cursor: move;
+  min-width: 0;
+}
+.placement.selected {
+  border: 2px solid #17695b;
+  box-shadow: 0 0 0 2px #fff8;
+}
+.placement:focus-visible {
+  outline: 3px solid #c27728;
+  outline-offset: 3px;
+}
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.template-card {
+  text-align: left;
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: white;
+}
+.template-card:hover {
+  border-color: var(--green);
+  background: #f1f6ed;
+}
+.template-card h2 {
+  font-size: 22px;
+  margin-top: 20px;
+}
+.template-card span {
+  color: var(--green);
+  font-weight: 600;
+  font-size: 14px;
+}
+.template-form {
+  max-width: 700px;
+}
+.field-error {
+  color: #a02a21;
+  font-size: 13px;
+  font-weight: 400;
+}
+[aria-invalid="true"] {
+  border-color: #a02a21 !important;
+}
+.legal-note {
+  padding: 16px 20px;
+  border-radius: 8px;
+  background: #f4f0e5;
+  font-size: 13px;
+}
+.legal-note a {
+  text-decoration: underline;
+}
+.final-text {
+  line-height: 1.6;
+}
+@media (max-width: 760px) {
+  .document-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .editor-controls {
+    padding: 18px;
+  }
+  .template-grid {
+    grid-template-columns: 1fr;
+  }
+  .preview-shell {
+    padding: 7px;
+  }
+  .document-workspace .workspace-title h1 {
+    font-size: 29px;
+  }
+  .editor-preview {
+    min-width: 0;
+  }
+}
+
+.document-workspace .file-picker input {
+  position: static;
+  opacity: 1;
+  height: auto;
+}
+.document-workspace .error-panel {
+  border: 1px solid #e8bfb0;
+  border-radius: 9px;
+  background: #fff0e9;
+  color: #8a3826;
+  padding: 16px;
+}
+.mobile-jump {
+  display: none;
+}
+@media (max-width: 760px) {
+  .mobile-jump {
+    display: inline-flex;
+    margin-bottom: 12px;
+  }
+}

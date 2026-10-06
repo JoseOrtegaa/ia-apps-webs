@@ -2,6 +2,7 @@ import {
   PDFDocument,
   PDFName,
   PDFDict,
+  PDFArray,
   StandardFonts,
   degrees,
   rgb,
@@ -46,7 +47,7 @@ async function pdfjs() {
   ).href;
   return lib;
 }
-async function openPdf(file: File) {
+export async function openPdf(file: File) {
   const lib = await pdfjs();
   const task = lib.getDocument({
     data: new Uint8Array(await file.arrayBuffer()),
@@ -67,7 +68,7 @@ async function openPdf(file: File) {
     throw error;
   }
 }
-async function readPdf(file: File) {
+export async function readPdf(file: File) {
   const header = new TextDecoder().decode(
     await file.slice(0, 1024).arrayBuffer(),
   );
@@ -85,7 +86,30 @@ async function readPdf(file: File) {
     );
   return doc;
 }
-function checkEditable(doc: PDFDocument) {
+export function checkEditable(doc: PDFDocument) {
+  // Inspect objects, including signatures without an AcroForm and nested direct dictionaries.
+  const seen = new Set<unknown>();
+  function signed(value: unknown): boolean {
+    if (seen.has(value)) return false;
+    seen.add(value);
+    if (value instanceof PDFDict) {
+      if (
+        value.has(PDFName.of("ByteRange")) ||
+        ["/Sig", "/DocTimeStamp"].includes(
+          String(value.get(PDFName.of("Type"))),
+        ) ||
+        String(value.get(PDFName.of("FT"))) === "/Sig" ||
+        value.has(PDFName.of("DocMDP"))
+      )
+        return true;
+      return value.values().some(signed);
+    }
+    return value instanceof PDFArray && value.asArray().some(signed);
+  }
+  if (doc.context.enumerateIndirectObjects().some(([, value]) => signed(value)))
+    throw new UserError(
+      "Este PDF contiene una firma digital o un campo de firma. Modificarlo puede invalidar su certificado. MyTools no lo modificará; utiliza el original sin firmar. Una firma visual no sustituye una firma digital.",
+    );
   if (
     doc.catalog
       .lookupMaybe(PDFName.of("AcroForm"), PDFDict)
@@ -93,10 +117,10 @@ function checkEditable(doc: PDFDocument) {
     doc.getForm().getFields().length
   )
     throw new UserError(
-      "Este PDF contiene formularios o firmas interactivas. Exporta una copia aplanada antes de modificarlo.",
+      "Este PDF contiene formularios o firmas interactivas. Los formularios existentes todavía no se pueden editar aquí; utiliza una copia sin campos y conserva el original.",
     );
 }
-async function imageElement(file: File) {
+export async function imageElement(file: File) {
   // Read dimensions before decoding to keep oversized images away from mobile canvas.
   const bytes = new Uint8Array(await file.arrayBuffer());
   let width = 0,
@@ -176,11 +200,12 @@ async function imageCanvas(file: File, maxSide: number) {
   img.src = "";
   return canvas;
 }
-async function renderPage(
+export async function renderPage(
   doc: Awaited<ReturnType<typeof openPdf>>,
   index: number,
   side: number,
   format = "image/png",
+  annotations = false,
 ) {
   const page = await doc.getPage(index + 1),
     canvas = document.createElement("canvas");
@@ -211,7 +236,7 @@ async function renderPage(
       canvasContext: ctx,
       viewport,
       background: "#ffffff",
-      annotationMode: 0,
+      annotationMode: annotations ? 1 : 0,
     }).promise;
     return await new Promise<Blob>((resolve, reject) =>
       canvas.toBlob(
@@ -304,7 +329,7 @@ function drawPosition(page: PDFPage, x: number, y: number) {
   if (angle === 270) return { x: b.x + y, y: b.y + b.height - x, angle };
   return { x: b.x + x, y: b.y + y, angle };
 }
-async function pack(
+export async function pack(
   outputs: { name: string; bytes: Uint8Array }[],
   name: string,
 ): Promise<Output> {
@@ -592,7 +617,7 @@ export async function processFiles(
     number: "numerado",
     watermark: "marca-de-agua",
     crop: "recortado",
-  }[tool];
+  }[tool as "rotate" | "number" | "watermark" | "crop"];
   return pack(
     [{ name: `${name}-${suffix}.pdf`, bytes: await source.save() }],
     name,

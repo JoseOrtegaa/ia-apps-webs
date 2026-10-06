@@ -1,21 +1,21 @@
 # MyTools
 
-Hereda AGENTS.md raíz y PROTOTYPE_FAST; un solo agente. Presupuesto **0 €**. No añadir backend, APIs, cuentas, analítica ni almacenamiento de documentos.
+Hereda AGENTS.md raíz y PROTOTYPE_FAST; un solo agente. **0 €**, sin backend, APIs, cuentas, analítica ni almacenamiento de documentos/datos personales/firmas.
 
-## Producto y aceptación
-Colección ampliable de utilidades para archivos, móvil/escritorio. Flujo: elegir → previsualizar → ajustar → procesar → descargar/repetir. Validar salida real, errores claros, límites y ausencia de envíos de archivos.
+## Producto
+Colección ampliable de utilidades para archivos, mobile-first. Elegir → ajustar/previsualizar → descargar/reiniciar. Conservar diseño verde/crema, accesibilidad y límites. Validar archivos descargados, no solo mensajes.
 
-## Implementación
-React + TypeScript + Vite. `src/config.ts`: registro `TOOLS` (id, nombre, categoría, grupo, icono, descripción, ruta, estado) y límites centralizados. `App.tsx`: catálogo, búsqueda y rutas hash; `Workspace.tsx`: selección, miniaturas, orden táctil/teclado, configuración y estados; `engine.ts`: procesamiento cargado bajo demanda. Nuevas categorías/herramientas deben registrarse aquí sin duplicar la home.
+## Arquitectura
+React + TypeScript + Vite. `config.ts`: TOOLS y límites; `App.tsx`: catálogo y rutas hash, reinicia herramientas al navegar. `Workspace.tsx`/`engine.ts`: 11 operaciones originales. `PdfEditor.tsx`: firma visual y texto multipágina; `documentEngine.ts`: composición mediante transformación inversa del viewport (rotación/CropBox/UserUnit), texto WinAnsi español y paginación A4. `PdfPreview.tsx` renderiza el mismo PDF descargable, incluidas apariencias de anotaciones. `templates.ts`: registro determinista de campos/validación/textos; `Templates.tsx`: formulario → texto editable → PDF.
 
-pdf-lib modifica/crea; PDF.js legacy renderiza secuencialmente en worker; fflate descarga múltiples resultados en ZIP. Cinco dependencias de ejecución: excepción pequeña al objetivo de cuatro para evitar implementar ZIP a mano. Assets PDF locales, sin CDN. Datos exclusivamente en memoria; URLs revocadas, canvas y workers liberados.
+13 herramientas PDF y categoría Documentos con carta, solicitud y baja voluntaria española. Esta última no calcula preavisos/indemnizaciones; nota y referencia BOE en README. Firmar no incorpora certificado. Añadir texto no edita ni elimina contenido original. Formularios existentes pendientes: mantener bloqueo. Detectar firmas/campos de firma/ByteRange/DocMDP antes de cualquier modificación; no sugerir aplanar para preservar certificados.
 
-Límites: 20 archivos; 15 MB/archivo; 40 MB total; 80 páginas; exportar máximo 30 páginas a imagen; 24 MP entrada; lado 2.400 px al crear PDF, 1.800 px al exportar; resultado 60 MB.
+pdf-lib, PDF.js local y fflate; cinco dependencias contando React/ReactDOM. Sin CDN. Datos solo en memoria; URLs revocadas, canvas/workers liberados.
 
-## Alcance
-11 herramientas: imágenes JPG/PNG↔PDF; unir, dividir, extraer, eliminar, reordenar, rotar; numerar, marca de agua, recorte simétrico visual (no censura). Rechaza PDFs cifrados y edición de formularios/firmas interactivas. Office↔PDF, HTML, PDF/A y edición avanzada: pendientes, motivos en README.
+## Límites
+20 archivos, 15 MB/archivo, 40 MB total, 80 páginas; imágenes 24 MP, ajuste 2.400 px; exportar 30 páginas/1.800 px; salida 60 MB. Editor: 80 bloques, 2.000 caracteres/bloque, 20 firmas/40 MB preparados. Plantillas: 60.000 caracteres/80 páginas.
 
 ## Operación
-`npm ci`; `npm run dev`; `npm run build`; `npm test`; `npm run publish:files` actualiza únicamente `docs/mytools/`. Pages existente main:/docs; base `/ia-apps-webs/mytools/`.
+`npm ci`; `npm run dev`; `npm run build`; `npm test`; `npm run publish:files` modifica solo `docs/mytools/`. Pages main:/docs.
 Demo: https://joseortegaa.github.io/ia-apps-webs/mytools/.
-QA y limitaciones de entorno: README. Siguiente paso: validar en Safari físico; ampliar solo a petición.
+QA, compatibilidad y fuentes: README. Pendiente Safari físico; ampliar solo a petición.

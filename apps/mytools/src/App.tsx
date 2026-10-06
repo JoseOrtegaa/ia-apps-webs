@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { GROUPS, TOOLS, LIMITS } from "./config";
 import { Icon } from "./Icon";
+const PdfEditor = lazy(() => import("./PdfEditor"));
+const Templates = lazy(() => import("./Templates"));
 const Workspace = lazy(() => import("./Workspace"));
 function getPath() {
   return window.location.hash.slice(1) || "/";
@@ -8,14 +10,23 @@ function getPath() {
 export default function App() {
   const [path, setPath] = useState(getPath),
     [query, setQuery] = useState(""),
-    [group, setGroup] = useState<string>("Todas");
+    [group, setGroup] = useState<string>("Todas"),
+    [routeVersion, setRouteVersion] = useState(0);
   useEffect(() => {
     const update = () => {
       setPath(getPath());
+      setRouteVersion((v) => v + 1);
       window.scrollTo(0, 0);
     };
     window.addEventListener("hashchange", update);
-    return () => window.removeEventListener("hashchange", update);
+    const restore = (event: PageTransitionEvent) => {
+      if (event.persisted) update();
+    };
+    window.addEventListener("pageshow", restore);
+    return () => {
+      window.removeEventListener("hashchange", update);
+      window.removeEventListener("pageshow", restore);
+    };
   }, []);
   const tool = TOOLS.find((t) => t.path === path);
   useEffect(() => {
@@ -79,7 +90,13 @@ export default function App() {
               </div>
             }
           >
-            <Workspace key={tool.id} tool={tool} />
+            {tool.id === "templates" ? (
+              <Templates key={routeVersion} tool={tool} />
+            ) : tool.id === "sign" || tool.id === "text" ? (
+              <PdfEditor key={`${tool.id}-${routeVersion}`} tool={tool} />
+            ) : (
+              <Workspace key={`${tool.id}-${routeVersion}`} tool={tool} />
+            )}
           </Suspense>
         ) : path === "/about" ? (
           <div className="shell about">
@@ -331,7 +348,9 @@ export default function App() {
                       </div>
                       <h3>{t.name}</h3>
                       <p>{t.description}</p>
-                      <span className="card-category">{t.group}</span>
+                      <span className="card-category">
+                        {t.category} · {t.group}
+                      </span>
                     </a>
                   ))}
                 </div>

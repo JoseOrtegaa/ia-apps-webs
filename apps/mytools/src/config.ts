@@ -23,12 +23,15 @@ export type ToolId =
   | "rotate"
   | "number"
   | "watermark"
-  | "crop";
+  | "crop"
+  | "sign"
+  | "text"
+  | "templates";
 export type Tool = {
   id: ToolId;
   name: string;
   description: string;
-  group: "Convertir" | "Organizar" | "Editar";
+  group: "Convertir" | "Organizar" | "Editar" | "Plantillas";
   category: string;
   icon: string;
   path: string;
@@ -57,6 +60,36 @@ const define = (
   status: "available",
 });
 export const TOOLS: Tool[] = [
+  define(
+    "sign",
+    "Firmar PDF",
+    "Tu firma dibujada o en imagen, donde la necesites.",
+    "Editar",
+    "pen",
+    "Descargar PDF firmado",
+    "Firma visual, sin certificado digital.",
+  ),
+  define(
+    "text",
+    "Añadir texto a PDF",
+    "Notas y textos sobre tus páginas, a tu medida.",
+    "Editar",
+    "text",
+    "Descargar PDF con texto",
+    "Añade texto; no modifica el original ni elimina contenido.",
+  ),
+  {
+    id: "templates",
+    name: "Plantillas de documentos",
+    description: "Cartas y solicitudes listas para personalizar.",
+    category: "Documentos",
+    group: "Plantillas",
+    icon: "file",
+    path: "/documentos/plantillas",
+    status: "available",
+    action: "Descargar PDF",
+    hint: "Elige, completa, revisa y descarga.",
+  },
   define(
     "images-pdf",
     "Imagen a PDF",
@@ -157,7 +190,13 @@ export const TOOLS: Tool[] = [
     "Recorta visualmente los cuatro márgenes por igual. El contenido oculto no se elimina.",
   ),
 ];
-export const GROUPS = ["Todas", "Convertir", "Organizar", "Editar"] as const;
+export const GROUPS = [
+  "Todas",
+  "Convertir",
+  "Organizar",
+  "Editar",
+  "Plantillas",
+] as const;
 export class UserError extends Error {}
 export function friendlyError(error: unknown): string {
   if (error instanceof UserError) return error.message;
@@ -165,7 +204,7 @@ export function friendlyError(error: unknown): string {
   if (/encrypt|password/i.test(message))
     return "Este PDF está protegido y no puede procesarse. Abre una copia sin contraseña.";
   if (/WinAnsi|encode/i.test(message))
-    return "Usa letras latinas, números y signos habituales para la marca de agua; los emojis no son compatibles.";
+    return "Usa letras latinas, números y signos habituales para el texto; los emojis no son compatibles.";
   return "No hemos podido abrir o procesar este archivo. Puede estar dañado o ser demasiado complejo. Prueba con un documento más pequeño.";
 }
 export function validateFiles(

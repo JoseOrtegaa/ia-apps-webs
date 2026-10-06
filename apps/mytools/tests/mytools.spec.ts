@@ -1,4 +1,4 @@
-import { test as base, expect, type Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import {
   PDFDocument,
   StandardFonts,
@@ -12,39 +12,7 @@ import { readFile } from "node:fs/promises";
 import { Buffer } from "node:buffer";
 // Optional per-test browser for restricted containers whose single-process browser
 // cannot survive context disposal. Normal developer runs use Playwright defaults.
-const test = process.env.QA_ISOLATED_BROWSER
-  ? base.extend({
-      page: async (
-        {
-          playwright,
-          browserName,
-          launchOptions,
-          viewport,
-          isMobile,
-          deviceScaleFactor,
-          hasTouch,
-          userAgent,
-          baseURL,
-        },
-        use,
-      ) => {
-        const browser = await playwright[browserName].launch(launchOptions);
-        try {
-          const context = await browser.newContext({
-            viewport,
-            isMobile,
-            deviceScaleFactor,
-            hasTouch,
-            userAgent,
-            baseURL,
-          });
-          await use(await context.newPage());
-        } finally {
-          await browser.close();
-        }
-      },
-    })
-  : base;
+import { test } from "./browser";
 type Upload = { name: string; mimeType: string; buffer: Buffer };
 let sample: Upload, one: Upload, many: Upload, form: Upload;
 async function pdf(count: number, name: string): Promise<Upload> {
@@ -170,7 +138,7 @@ function content(doc: PDFDocument, index: number) {
 test("home, search, filters, mobile layout, deep-link reload", async ({
   page,
 }, info) => {
-  await expect(page.locator(".tool-card")).toHaveCount(11);
+  await expect(page.locator(".tool-card")).toHaveCount(14);
   await page.screenshot({ path: info.outputPath("home.png"), fullPage: true });
   await expect(page.locator("body")).toHaveJSProperty(
     "scrollWidth",
@@ -186,7 +154,7 @@ test("home, search, filters, mobile layout, deep-link reload", async ({
   await page.getByRole("link", { name: "Todas las herramientas" }).click();
   await page.getByRole("textbox", { name: "Buscar herramienta" }).fill("");
   await page.getByRole("button", { name: "Editar", exact: true }).click();
-  await expect(page.locator(".tool-card")).toHaveCount(3);
+  await expect(page.locator(".tool-card")).toHaveCount(5);
 });
 
 test("JPG to PDF: single image and restart", async ({ page }) => {

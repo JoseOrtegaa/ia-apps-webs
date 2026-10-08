@@ -1,19 +1,12 @@
-# ia-apps-webs — instrucciones comunes
+# ia-apps-webs — reglas mínimas
 
-## Objetivo
-Crear micro apps web responsive para móvil y escritorio: prototipos funcionales, visualmente cuidados y fáciles de probar. Priorizar simplicidad y consumo reducido de contexto. Idioma predeterminado: español.
+Desarrolla directamente con una sola sesión de IA y GitHub: **sin subagentes, roles separados, fases ceremoniales ni documentos de contexto por app**.
 
-## Lectura y alcance
-Leer este archivo y `WORKFLOW.md`; después únicamente `apps/<slug>/AGENTS.md` y archivos necesarios. Antes de añadir backend o servicios externos, leer `COSTES.md`. Respetar trabajo parcial, revisar git y no modificar otras apps. Una carpeta independiente por app. Copiar los contextos de `templates/app/` al iniciar una.
-
-## Arquitectura
-Frontend predeterminado: React + Vite + TypeScript; HTML/CSS/JS para utilidades que no necesiten framework. Backend solo si aporta valor: Cloudflare Workers + Hono; D1/KV únicamente si se justifican. Verificar condiciones actuales antes de elegir servicios. Frontends de prueba en GitHub Pages; backend separado. Sin microservicios, monorepo tooling ni abstracciones preventivas.
-
-## Calidad visual
-Definir una dirección visual coherente. Cuidar tipografía, espaciado, jerarquía, contraste, estados vacíos/carga/error y controles táctiles. Comprobar móvil y escritorio, teclado, foco visible y ausencia de desbordamientos. No usar botones ficticios ni presentar mocks como funciones reales.
-
-## Costes: requisito obligatorio
-Presupuesto inicial autorizado: 0 €. Informar SIEMPRE de cualquier función que pueda generar cargos a Jose. Antes de activarla, obtener autorización explícita para el servicio y límite concreto. Ni una solicitud de funcionalidad ni de despliegue autoriza pagar. Aplicar `COSTES.md`: límites en servidor, cuota global y corte al agotarse. Sin protección verificable, mantener la función desactivada y explicar el bloqueo. Nunca publicar secretos.
-
-## Ejecución
-Un solo agente por defecto. Seguir `WORKFLOW.md`, realizar QA proporcional y actualizar el contexto de la app. Entregar cambios, comprobaciones, limitaciones reales y enlace verificado. No afirmar que está desplegado sin comprobarlo.
+- Objetivo: microapps web funcionales, sencillas, visualmente cuidadas y cómodas en iPhone/móvil y escritorio.
+- Antes de editar, inspecciona la rama actual, el código afectado y el README de la app. Respeta cambios existentes. No modifiques otras apps.
+- Prioriza HTML/CSS/JS para apps simples; React + Vite + TypeScript cuando aporte valor. Evita abstracciones, dependencias y backend innecesarios.
+- **Presupuesto autorizado: 0 €.** Procesa archivos en el navegador siempre que sea viable. No añadas servicios de pago, APIs externas facturables ni infraestructura con coste sin autorización previa y límites verificables. Si se plantea backend, consulta [COSTES.md](COSTES.md). Nunca publiques secretos.
+- Mantén accesibilidad, controles táctiles, diseño adaptable y estados de error útiles. No presentes funciones ficticias como operativas.
+- Ejecuta pruebas proporcionales al cambio; build y flujo principal cuando corresponda. Corrige errores antes de integrar y no inventes pruebas realizadas.
+- GitHub Pages publica desde `main:/docs`. Actualiza solo `docs/<app>/` usando su script de publicación; nunca borres otras apps. Confirma la URL publicada si es posible.
+- Entrega un resumen breve: cambios, pruebas reales, commit y enlace. Modifica README solo si cambia la forma de usar o desarrollar la app.

@@ -1,6 +1,14 @@
 // Añade una entrada y su captura en assets/. El orden menor aparece primero.
 export const projects = [
   {
+    id: 'pizarra', name: 'Koi Pizarra', type: 'app',
+    description: 'Dibuja ideas, explica un flujo o planea tu juego. Trazos suaves, notas y objetos que puedes mover. Exporta y comparte.',
+    url: 'https://joseortegaa.github.io/ia-apps-webs/pizarra/',
+    thumbnail: './assets/pizarra.webp',
+    alt: 'Koi Pizarra con un esquema editable de un juego, notas, flechas y una base de datos.',
+    tags: ['Pizarra', 'Dibujo', 'Diagramas', 'Productividad'], status: 'available', order: 0,
+  },
+  {
     id: 'huroner-survivor', name: 'Huroner Survivor', type: 'juego',
     description: 'Un hurón, una espada y diez minutos frente a hordas mutantes. Elige mejoras y enfréntate a sus jefes.',
     url: 'https://joseortegaa.github.io/ai-web-games-automata/huroner-survivor/',

@@ -6,6 +6,7 @@ Microapps web independientes, sencillas y funcionales, diseñadas para móvil y 
 
 | App | Código | Enlace |
 | --- | --- | --- |
+| Koi Pizarra | [`apps/pizarra/`](apps/pizarra/) | [Abrir Pizarra](https://joseortegaa.github.io/ia-apps-webs/pizarra/) |
 | MyTools | [`apps/mytools/`](apps/mytools/) | [Abrir MyTools](https://joseortegaa.github.io/ia-apps-webs/mytools/) |
 | Koi Store | [`apps/koi-store/`](apps/koi-store/) | [Abrir Koi Store](https://joseortegaa.github.io/ia-apps-webs/koi-store/) |
 
@@ -15,6 +16,7 @@ Microapps web independientes, sencillas y funcionales, diseñadas para móvil y 
 
 - Cada app vive en `apps/<slug>/`. Su README explica funcionalidades, dependencias, comandos y pruebas; el código es la fuente de verdad.
 - Para MyTools: entrar en `apps/mytools`, ejecutar `npm ci`, `npm test` y `npm run publish:files` (compila y actualiza únicamente `docs/mytools/`).
+- Para Koi Pizarra: `node --test apps/pizarra/scripts/model.test.mjs` y `node apps/pizarra/scripts/publish.mjs`. No necesita instalar dependencias.
 - Para Koi Store: desde la raíz ejecutar `node apps/koi-store/scripts/publish.mjs`; QA en `apps/koi-store/README.md`.
 - GitHub Pages sirve `main:/docs`. La portada está en [GitHub Pages](https://joseortegaa.github.io/ia-apps-webs/). Cada publicación debe conservar los otros directorios de `docs/` y verificar las rutas reales.
 - Los prototipos parten de **0 €**, sin backend por defecto. Antes de incorporar infraestructura, funciones facturables o servicios externos, aplicar `COSTES.md` y solicitar autorización explícita.

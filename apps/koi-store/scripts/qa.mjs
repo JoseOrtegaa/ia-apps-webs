@@ -24,7 +24,7 @@ for (const width of [1440, 390, 320]) {
   page.on('response', response => { if (response.status() >= 400) failed.push(response.url()); });
   assert.equal((await page.goto(url, { waitUntil: 'networkidle' })).status(), 200);
   await page.locator('.project').last().waitFor();
-  assert.equal(await page.locator('.project').count(), 3);
+  assert.equal(await page.locator('.project').count(), 4);
   for (const img of await page.locator('.thumbnail').all()) {
     await img.scrollIntoViewIfNeeded();
     await img.evaluate(el => el.decode());
@@ -42,18 +42,21 @@ for (const width of [1440, 390, 320]) {
   assert.equal(await page.locator('.project').count(), 0);
   assert.ok(await page.locator('#empty').isVisible());
   await page.getByRole('button', { name: 'Borrar búsqueda' }).click();
+  assert.equal(await page.locator('.project').count(), 2);
+  await page.locator('#search').fill('pizarra');
   assert.equal(await page.locator('.project').count(), 1);
+  assert.match(await page.locator('.project h3').innerText(), /Koi Pizarra/);
   await page.locator('#search').fill('archivos dispositivo');
   assert.equal(await page.locator('.project').count(), 1);
   await page.locator('#search').fill('noexiste');
   await page.getByRole('button', { name: 'Ver todos los proyectos' }).click();
-  assert.equal(await page.locator('.project').count(), 3);
+  assert.equal(await page.locator('.project').count(), 4);
   assert.equal(await page.locator('[data-filter=todos]').getAttribute('aria-pressed'), 'true');
   await page.locator('#search').fill('  ferret   jump  ');
   assert.equal(await page.locator('.project').count(), 1);
   await page.getByRole('button', { name: 'Borrar búsqueda' }).click();
   const links = await page.locator('.open-project').evaluateAll(els => els.map(el => ({ url: el.href, label: el.getAttribute('aria-label') })));
-  assert.equal(new Set(links.map(l => l.url)).size, 3);
+  assert.equal(new Set(links.map(l => l.url)).size, 4);
   assert.ok(links.every(l => l.url.startsWith('https://joseortegaa.github.io/') && l.label));
   await page.reload({ waitUntil: 'networkidle' });
   await page.keyboard.press('Tab');

@@ -36,3 +36,7 @@ Son prototipos en evolución; por eso se identifican como «En pruebas». No se 
 ## Validación de entrega
 
 QA local completado en Chromium a 1440, 390 y 320 px, sirviendo bajo `/ia-apps-webs/koi-store/`: todas las comprobaciones del script pasan. Capturas de escritorio y móvil revisadas visualmente. Los tres destinos públicos devolvieron HTTP 200 y renderizaron sin errores de JavaScript; ambos juegos se iniciaron. No probado en Safari/iPhone físico. GitHub Pages desplegó correctamente el commit `63bab7e`. El 2026-10-06 se repitió el mismo QA sobre la URL pública a 1440/390/320 px: todo correcto, sin errores de consola ni recursos fallidos ni peticiones a terceros. También se abrió cada destino desde su botón y se volvió con Atrás; el acceso desde la portada raíz funciona. No se realiza una auditoría funcional completa de los tres productos ni se modifican sus implementaciones. La disponibilidad se verifica al integrar, no durante las visitas al catálogo.
+
+## Koi Pizarra
+
+Añadida al catálogo el 2026-10-24. Miniatura `assets/pizarra.webp`: captura real del ejemplo de planificación de un juego, tomada en la vista local y ajustada a 960 × 720 sin inventar elementos. Destino: https://joseortegaa.github.io/ia-apps-webs/pizarra/. Incluye dibujo, suavizado, objetos editables y exportación; guardado en el navegador y sin sincronización entre usuarios.

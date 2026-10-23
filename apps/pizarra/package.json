@@ -1,0 +1,9 @@
+{
+  "name": "koi-pizarra",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test scripts/model.test.mjs",
+    "publish:files": "node scripts/publish.mjs"
+  }
+}

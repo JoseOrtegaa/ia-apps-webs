@@ -5,6 +5,15 @@ export const uid = () => globalThis.crypto?.randomUUID?.() || `p${Date.now()}${M
 export const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 export const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 export const minSize = kind => ({ w: kind === 'text' ? 80 : 100, h: ({ database:100, folder:75, document:90, server:115, actor:130, sticky:80, text:40 })[kind] || 70 });
+export const FONT = { min: 6, max: 256 };
+export const defaultFontSize = kind => kind === 'text' ? 24 : kind === 'diamond' ? 16 : 18;
+export const fontSizeFor = item => item.fontSize ?? defaultFontSize(item.kind);
+export function resizedObject(item, width, height) {
+  const minimum = minSize(item.kind);
+  const w = clamp(width, minimum.w, 2000), h = clamp(height, minimum.h, 2000);
+  const scale = Math.min(w / item.w, h / item.h);
+  return { ...item, w, h, fontSize: clamp(fontSizeFor(item) * scale, FONT.min, FONT.max) };
+}
 export const isPath = item => ['stroke', 'line', 'arrow'].includes(item.type);
 export const emptyBoard = () => ({ version: 1, title: 'Mi pizarra', items: [] });
 export function segmentDistance(p, a, b) {
@@ -100,7 +109,8 @@ export function validateBoard(value) {
       return { ...base, smooth: !!item.smooth, points: item.points.map(p => { if (!p || !num(p.x) || !num(p.y)) bad(); return { x: p.x, y: p.y }; }) };
     }
     if (item.type !== 'object' || !KINDS.includes(item.kind) || !num(item.x) || !num(item.y) || !num(item.w, 24, 2000) || !num(item.h, 24, 2000) || typeof item.text !== 'string' || item.text.length > 500) bad();
-    return { ...base, kind: item.kind, x: item.x, y: item.y, w: Math.max(minSize(item.kind).w,item.w), h: Math.max(minSize(item.kind).h,item.h), text: item.text };
+    if (item.fontSize !== undefined && !num(item.fontSize, FONT.min, FONT.max)) bad();
+    return { ...base, fontSize: item.fontSize ?? defaultFontSize(item.kind), kind: item.kind, x: item.x, y: item.y, w: Math.max(minSize(item.kind).w,item.w), h: Math.max(minSize(item.kind).h,item.h), text: item.text };
   });
   return { version: 1, title: value.title.slice(0, 80) || 'Mi pizarra', items };
 }
@@ -118,7 +128,7 @@ export class History {
 }
 export function createObject(kind, x, y, color = COLORS[0]) {
   const labels = { database: 'Base de datos', folder: 'Recursos', document: 'Documento', server: 'Servidor', actor: 'Jugador', sticky: 'Una idea por aquí', rect: 'Proceso', ellipse: 'Inicio', diamond: '¿Qué pasa si…?', text: 'Escribe una idea' };
-  return { id: uid(), type: 'object', kind, x, y, w: kind === 'text' ? 280 : 180, h: kind === 'text' ? 60 : kind === 'sticky' ? 160 : 130, color, opacity: 1, width: 2, text: labels[kind] };
+  return { id: uid(), type: 'object', kind, fontSize: defaultFontSize(kind), x, y, w: kind === 'text' ? 280 : 180, h: kind === 'text' ? 60 : kind === 'sticky' ? 160 : 130, color, opacity: 1, width: 2, text: labels[kind] };
 }
 export function exampleBoard() {
   const board = { version: 1, title: 'La aventura empieza aquí', items: [] };

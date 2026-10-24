@@ -1,4 +1,5 @@
 import { bounds, isPath, allBounds } from './model.js';
+import { layoutText, maximumFontSize } from './text-layout.js';
 export const NS = 'http://www.w3.org/2000/svg';
 export function svg(tag, attributes = {}, text) {
   const element = document.createElementNS(NS, tag);
@@ -16,25 +17,41 @@ export function pathData(points, smooth) {
   }
   const last = points.at(-1); return result + `L${last.x} ${last.y}`;
 }
-function addText(parent, item, x, y, width, height, fontSize = 18, anchor = 'middle') {
-  const maxChars = Math.max(4, Math.floor(width / (fontSize * .56)));
-  const lines = [];
-  for (const paragraph of item.text.split('\n')) {
-    let line = '';
-    for (const word of paragraph.split(' ')) {
-      if ((line + ' ' + word).trim().length > maxChars && line) { lines.push(line); line = ''; }
-      if (word.length > maxChars) {
-        if (line) { lines.push(line); line = ''; }
-        for (let i = 0; i < word.length; i += maxChars) { const piece = word.slice(i, i + maxChars); if (piece.length === maxChars) lines.push(piece); else line = piece; }
-      } else line = (line + ' ' + word).trim();
-    }
-    lines.push(line);
+let measureContext;
+const measuredWidths = new Map(), textLayouts = new WeakMap(), textMaximums = new WeakMap();
+export function measureLabel(text, size) {
+  if (!measureContext) {
+    measureContext = document.createElement('canvas').getContext('2d');
+    if (measureContext) measureContext.font = '500 100px Arial';
   }
-  const maxLines = Math.max(1, Math.floor(height / (fontSize * 1.35))), visible = lines.slice(0, maxLines);
-  if (lines.length > maxLines) visible[visible.length - 1] = visible.at(-1).slice(0, Math.max(1, maxChars - 1)) + '…';
-  const startY = y + (height - visible.length * fontSize * 1.35) / 2 + fontSize;
-  const text = svg('text', { fill: item.kind === 'sticky' ? '#5c4e2f' : item.color, stroke: 'none', 'font-family': 'Arial, sans-serif', 'font-size': fontSize, 'font-weight': item.kind === 'text' ? 500 : 500, 'text-anchor': anchor });
-  visible.forEach((line, i) => text.append(svg('tspan', { x, y: startY + i * fontSize * 1.35 }, line)));
+  if (!measuredWidths.has(text)) {
+    if (measuredWidths.size > 2048) measuredWidths.clear();
+    measuredWidths.set(text, measureContext ? measureContext.measureText(text).width : Array.from(text).length * 60);
+  }
+  return measuredWidths.get(text) * size / 100;
+}
+export function textMetrics(item) {
+  if (!textLayouts.has(item)) textLayouts.set(item, layoutText(item, measureLabel));
+  return textLayouts.get(item);
+}
+export function textSizeLimit(item) {
+  if (!textMaximums.has(item)) textMaximums.set(item, maximumFontSize(item, measureLabel));
+  return textMaximums.get(item);
+}
+function addText(parent, item) {
+  const { box, size, lines, lineHeight } = textMetrics(item);
+  const leftAligned = ['text', 'sticky'].includes(item.kind);
+  const clipId = `text-clip-${item.id}`;
+  const clip = svg('clipPath', { id: clipId, clipPathUnits: 'userSpaceOnUse' });
+  clip.append(svg('rect', { x: box.x, y: box.y, width: box.w, height: box.h }));
+  const defs = svg('defs'); defs.append(clip); parent.append(defs);
+  const text = svg('text', { fill: item.kind === 'sticky' ? '#5c4e2f' : item.color, stroke: 'none',
+    'font-family': 'Arial, sans-serif', 'font-size': size, 'font-weight': 500,
+    'text-anchor': leftAligned ? 'start' : 'middle', 'clip-path': `url(#${clipId})` });
+  const startY = box.y + (box.h - lines.length * lineHeight) / 2 + size;
+  lines.forEach((line, i) => text.append(svg('tspan', {
+    x: leftAligned ? box.x : box.x + box.w / 2, y: startY + i * lineHeight,
+  }, line)));
   parent.append(text);
 }
 export function renderItem(item) {
@@ -48,43 +65,43 @@ export function renderItem(item) {
     }
     return group;
   }
-  const {x, y, w, h, kind} = item, tint = `${item.color}0d`;
-  const shape = (tag, attrs) => { const node = svg(tag, attrs); group.append(node); return node; };
-  let tx = x + w / 2, ty = y + 10, tw = w - 24, th = h - 20, size = kind === 'text' ? 24 : kind === 'diamond' ? 16 : 18;
-  if (kind === 'rect') shape('rect', {x, y, width:w, height:h, rx:16, fill:'#fffefa'});
-  if (kind === 'ellipse') { shape('ellipse', {cx:tx, cy:y+h/2, rx:w/2, ry:h/2, fill:'#fffefa'}); tw = w * .7; }
-  if (kind === 'diamond') { shape('path', {d:`M${tx} ${y}L${x+w} ${y+h/2}L${tx} ${y+h}L${x} ${y+h/2}Z`, fill:'#fffefa'}); tw = w * .6; }
+  const { x, y, w, h, kind } = item, tint = `${item.color}0d`;
+  // All artwork uses a shared 180 × 130 reference box. Text uses its real world size.
+  const artwork = svg('g', { transform: `translate(${x} ${y}) scale(${w / 180} ${h / 130})`, 'data-artwork': kind });
+  group.append(artwork);
+  const shape = (tag, attrs) => artwork.append(svg(tag, attrs));
+  if (kind === 'rect') shape('rect', { x: 0, y: 0, width: 180, height: 130, rx: 14, fill: '#fffefa' });
+  if (kind === 'ellipse') shape('ellipse', { cx: 90, cy: 65, rx: 90, ry: 65, fill: '#fffefa' });
+  if (kind === 'diamond') shape('path', { d: 'M90 0L180 65L90 130L0 65Z', fill: '#fffefa' });
   if (kind === 'sticky') {
-    shape('path', {d:`M${x} ${y}H${x+w}V${y+h-24}L${x+w-24} ${y+h}H${x}Z`, fill:'#fff0ac', stroke:'#dfcb7c', 'stroke-width':1});
-    shape('path', {d:`M${x+w-24} ${y+h}V${y+h-24}H${x+w}`, fill:'#f2d878', stroke:'#dfcb7c', 'stroke-width':1});
-    tx = x + 18; tw = w - 36; ty = y + 12; th = h - 36;
+    shape('path', { d: 'M0 0H180V110L160 130H0Z', fill: '#fff0ac', stroke: '#dfcb7c', 'stroke-width': 1 });
+    shape('path', { d: 'M160 130V110H180', fill: '#f2d878', stroke: '#dfcb7c', 'stroke-width': 1 });
   }
   if (kind === 'database') {
-    shape('path', {d:`M${x} ${y+20}V${y+h-20}C${x} ${y+h+7} ${x+w} ${y+h+7} ${x+w} ${y+h-20}V${y+20}`, fill:'#fffefa'});
-    shape('ellipse', {cx:tx, cy:y+20, rx:w/2, ry:20, fill:tint});
-    shape('path', {d:`M${x} ${y+h-35}C${x} ${y+h-8} ${x+w} ${y+h-8} ${x+w} ${y+h-35}`});
-    ty = y+44; th = h-80;
+    shape('path', { d: 'M0 20V110C0 136 180 136 180 110V20', fill: '#fffefa' });
+    shape('ellipse', { cx: 90, cy: 20, rx: 90, ry: 20, fill: tint });
+    shape('path', { d: 'M0 95C0 122 180 122 180 95' });
   }
   if (kind === 'folder') {
-    shape('path', {d:`M${x} ${y+20}V${y+8}Q${x} ${y} ${x+8} ${y}H${x+w*.4}L${x+w*.52} ${y+20}H${x+w-8}Q${x+w} ${y+20} ${x+w} ${y+28}V${y+h}H${x}Z`, fill:'#fffefa'});
-    shape('rect', {x, y:y+32, width:w, height:h-32, rx:8, fill:tint}); ty=y+38; th=h-42;
+    shape('path', { d: 'M0 20V8Q0 0 8 0H72L94 20H172Q180 20 180 28V130H0Z', fill: '#fffefa' });
+    shape('rect', { x: 0, y: 32, width: 180, height: 98, rx: 8, fill: tint });
   }
   if (kind === 'document') {
-    shape('path', {d:`M${x} ${y}H${x+w-28}L${x+w} ${y+28}V${y+h}H${x}Z`, fill:'#fffefa'});
-    shape('path', {d:`M${x+w-28} ${y}V${y+28}H${x+w}M${x+20} ${y+h-28}H${x+w-20}M${x+20} ${y+h-16}H${x+w-50}`, opacity:.35});
-    ty=y+20; th=h-58;
+    shape('path', { d: 'M0 0H152L180 28V130H0Z', fill: '#fffefa' });
+    shape('path', { d: 'M152 0V28H180M20 102H160M20 114H130', opacity: .35 });
   }
   if (kind === 'server') {
-    for (let i=0;i<2;i++) { shape('rect',{x:x+12,y:y+6+i*34,width:w-24,height:28,rx:6,fill:'#fffefa'}); shape('circle',{cx:x+26,cy:y+20+i*34,r:3,fill:item.color,stroke:'none'}); shape('path',{d:`M${x+42} ${y+20+i*34}H${x+w-24}`,opacity:.4}); }
-    ty=y+80; th=h-84;
+    for (let i = 0; i < 2; i++) {
+      shape('rect', { x: 12, y: 6 + i * 34, width: 156, height: 28, rx: 6, fill: '#fffefa' });
+      shape('circle', { cx: 26, cy: 20 + i * 34, r: 3, fill: item.color, stroke: 'none' });
+      shape('path', { d: `M42 ${20 + i * 34}H156`, opacity: .4 });
+    }
   }
   if (kind === 'actor') {
-    shape('circle',{cx:tx,cy:y+24,r:20,fill:tint});
-    shape('path',{d:`M${tx-35} ${y+88}V${y+78}C${tx-35} ${y+40} ${tx+35} ${y+40} ${tx+35} ${y+78}V${y+88}Z`,fill:'#fffefa'});
-    ty=y+96; th=h-100;
+    shape('circle', { cx: 90, cy: 27, r: 22, fill: tint });
+    shape('path', { d: 'M28 128V92C28 51 152 51 152 92V128Z', fill: '#fffefa' });
   }
-  if (kind === 'text') { tx=x; ty=y; tw=w; th=h; }
-  addText(group,item,tx,ty,tw,Math.max(th,26),size,['text','sticky'].includes(kind)?'start':'middle');
+  addText(group, item);
   return group;
 }
 export function renderSelection(layer, item, zoom) {

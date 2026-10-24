@@ -43,3 +43,11 @@ test('moving and hit testing strokes use actual geometry, and bounds contain all
  const next=translated(source,10,-20);assert.deepEqual(next.points[0],{x:10,y:-20});assert.deepEqual(source.points[0],{x:0,y:0});
  const b=allBounds([next,createObject('folder',300,200)]);assert(b.x<=10&&b.y<=-20);assert(b.x+b.w>=480&&b.y+b.h>=330);
 });
+
+test('saved font sizes round-trip and old boards receive compatible defaults',()=>{
+ const object={...createObject('folder',0,0),fontSize:37};
+ assert.equal(validateBoard({...emptyBoard(),items:[object]}).items[0].fontSize,37);
+ delete object.fontSize;
+ assert.equal(validateBoard({...emptyBoard(),items:[object]}).items[0].fontSize,18);
+ for(const size of [0,-1,Infinity,'20',257])assert.throws(()=>validateBoard({...emptyBoard(),items:[{...object,fontSize:size}]}));
+});

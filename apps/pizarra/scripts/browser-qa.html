@@ -1,0 +1,58 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><title>QA · Gestos y texto de Pizarra</title>
+<style>body{font:14px system-ui;background:#edf1e9;color:#243d31;margin:20px}header{display:flex;gap:12px;align-items:center}button{font:inherit;padding:10px}main{display:flex;gap:20px;align-items:start}iframe{border:1px solid #bbcabb;border-radius:12px;flex:none}pre{white-space:pre-wrap;max-width:600px;line-height:1.6}select{font:inherit;padding:10px}</style>
+<header><h1>QA de interacción</h1><select id="size" aria-label="Tamaño de prueba"><option value="390,844">390 × 844</option><option value="320,720">320 × 720</option><option value="844,390">844 × 390</option><option value="1366,900">1366 × 900</option></select><button id="run">Comprobar gestos y texto</button></header>
+<p>Prueba local: usa la pizarra de este origen y conserva los cambios para inspección visual. No se publica.</p>
+<main><iframe id="app" title="Pizarra en prueba" src="../index.html" width="390" height="844"></iframe><pre id="result">Esperando.</pre></main>
+<script type="module">
+const frame=document.querySelector('#app'),output=document.querySelector('#result');
+const tick=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+document.querySelector('#size').onchange=async e=>{[frame.width,frame.height]=e.target.value.split(',');await tick();};
+document.querySelector('#run').onclick=async()=>{
+ const win=frame.contentWindow,doc=frame.contentDocument,$=s=>doc.querySelector(s),click=s=>$(s).click();let passed=0;
+ output.textContent='';
+ const check=(ok,label)=>{output.textContent+=(ok?'✓ ':'✗ ')+label+'\n';if(!ok)throw Error(label);passed++;};
+ const rect=s=>$(s).getBoundingClientRect();
+ const camera=()=>{const m=$('#world').transform.baseVal.consolidate().matrix;return{x:m.e,y:m.f,z:m.a};};
+ const count=()=>$('#items').children.length;
+ const pointer=(type,id,x,y)=>{const r=rect('#board');$('#board').dispatchEvent(new win.PointerEvent('pointer'+type,{bubbles:true,cancelable:true,pointerType:'touch',pointerId:id,clientX:x+r.left,clientY:y+r.top,button:0,buttons:type==='up'?0:1}));};
+ const tap=(x,y)=>{pointer('down',10,x,y);pointer('up',10,x,y);};
+ const font=(value)=>{const input=$('#font-size-number');input.value=value;input.dispatchEvent(new win.Event('change',{bubbles:true}));};
+ try {
+  click('button[data-tool="pen"]');click('#zoom-reset');await tick();const before=count(),toolbar=rect('#toolbar'),initial=camera();
+  pointer('down',1,100,200);pointer('move',1,102,201);pointer('down',2,280,200);
+  pointer('move',1,140,225);pointer('move',2,230,225);await tick();
+  check(count()===before,'El segundo dedo cancela el trazo provisional');
+  check(camera().z<initial.z*.6,'Juntar los dedos aleja solo el lienzo');
+  check(rect('#toolbar').width===toolbar.width&&rect('#toolbar').y===toolbar.y,'La barra conserva tamaño y posición al pellizcar');
+  const pinched=camera();pointer('up',2,230,225);pointer('move',1,170,245);await tick();
+  check(Math.abs(camera().x-pinched.x-30)<.01&&Math.abs(camera().y-pinched.y-20)<.01,'Al levantar un dedo se puede continuar desplazando');
+  pointer('up',1,170,245);click('button[data-tool="pen"]');await tick();
+  check($('button[data-tool="pen"]').getAttribute('aria-pressed')==='true','Los marcadores siguen accesibles tras el gesto');
+  click('button[data-tool="text"]');pointer('down',3,100,200);pointer('down',4,280,200);pointer('move',3,120,200);pointer('up',4,280,200);pointer('up',3,120,200);await tick();
+  check(!$('#text-dialog').open,'Un pellizco con Texto activo no abre el editor');
+  click('#zoom-reset');click('button[data-tool="objects"]');click('[data-kind="actor"]');await tick();
+  check(!$('#text-controls').hidden,'El objeto seleccionado muestra el control Letra');
+  let node=$('#items').lastElementChild,clip=node.querySelector('clipPath rect').getBBox(),label=node.querySelector('text').getBBox();
+  check(label.x>=clip.x-.1&&label.y>=clip.y-.1&&label.x+label.width<=clip.x+clip.width+.1&&label.y+label.height<=clip.y+clip.height+.1,'La etiqueta Jugador cabe dentro de su región del torso');
+  const oldSize=Number(node.querySelector('text').getAttribute('font-size')),oldMaximum=Number($('#font-size-number').max),handle=rect('[data-resize]'),cam=camera();
+  pointer('down',5,handle.x+handle.width/2,handle.y+handle.height/2);pointer('move',5,handle.x+handle.width/2+180*cam.z,handle.y+handle.height/2+130*cam.z);pointer('up',5,handle.x+handle.width/2+180*cam.z,handle.y+handle.height/2+130*cam.z);await tick();
+  node=$('#items').lastElementChild;
+  check(Math.abs(Number(node.querySelector('text').getAttribute('font-size'))-oldSize*2)<.2,'Redimensionar al doble también duplica la letra');
+  check(Number($('#font-size-number').max)>oldMaximum,'El máximo de Letra aumenta con el objeto');
+  font(256);await tick();node=$('#items').lastElementChild;clip=node.querySelector('clipPath rect').getBBox();label=node.querySelector('text').getBBox();
+  check(Number($('#font-size-number').value)<=Number($('#font-size-number').max)&&label.x>=clip.x-.1&&label.x+label.width<=clip.x+clip.width+.1&&label.y+label.height<=clip.y+clip.height+.1,'El control limita el texto al espacio del objeto');
+  click('button[data-tool="text"]');font(48);await tick();tap(50,150);await tick();
+  check($('#text-dialog').open,'Un toque normal con Texto sí abre el editor');
+  $('#text-value').value='Plan del juego';$('#text-form').requestSubmit();await tick();
+  check(Number($('#items').lastElementChild.querySelector('text').getAttribute('font-size'))===48,'El texto libre respeta el tamaño elegido');
+  const props=rect('#properties'),zoom=rect('.bottom-bar'),tools=rect('#toolbar');
+  check(props.x>=0&&props.right<=win.innerWidth+1,'El panel de letra cabe en el ancho de pantalla');
+  check(win.innerWidth>700||zoom.bottom<=props.top,'El zoom no se solapa con el control de letra en móvil');
+  check(tools.bottom<=win.innerHeight&&tools.x>=0&&tools.right<=win.innerWidth+1,'Las herramientas siguen dentro de la pantalla');
+  const guard=new win.Event('gesturechange',{cancelable:true});doc.dispatchEvent(guard);
+  check(guard.defaultPrevented&&win.getComputedStyle($('#board')).touchAction==='none','El zoom nativo está desactivado y el lienzo gestiona los gestos');
+  click('button[data-tool="select"]');click('#fit');await tick();
+  output.textContent+='\n'+passed+' comprobaciones correctas.';
+ } catch(error){output.textContent+='\nERROR: '+error.message;}
+};
+</script></html>

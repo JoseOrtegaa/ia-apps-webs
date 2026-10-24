@@ -5,3 +5,23 @@
 @media(max-height:580px) and (min-width:701px){.toolbar{flex-direction:row;left:50%;top:auto;bottom:16px;transform:translateX(-50%)}.tool-separator{height:28px;width:1px;margin:8px 4px}.tool-button .tool-key{display:none}.properties{bottom:83px;padding:5px 10px}.brush-options{display:none}.bottom-bar{bottom:18px}.empty-state{top:41%}.empty-scribble{display:none}.empty-state h1{font-size:35px}.empty-state>p:not(.eyebrow){margin-bottom:8px}.empty-note{display:none}.utility-controls #grid{display:none}.zoom-controls .icon-button{width:30px}.selection-actions{top:90px}}@media(max-height:650px) and (max-width:700px){.empty-scribble{display:none}.empty-state{top:34%}.empty-state h1{font-size:32px}.empty-note{display:none}.empty-state>p:not(.eyebrow){margin-bottom:10px}.empty-state .eyebrow{margin-bottom:10px}}@media(prefers-reduced-motion:no-preference){button{transition:background-color .12s,transform .12s}dialog[open]{animation:appear .18s ease-out}@keyframes appear{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}}
 
 #board:focus{outline:none}#board:focus-visible{outline:2px solid #79a18b;outline-offset:-3px}
+
+/* Browser gestures never scale the toolbars; drawing navigation belongs to #world. */
+html,body,#app{touch-action:none;overscroll-behavior:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+#board,#toolbar,.topbar,.properties,.bottom-bar,.selection-actions{touch-action:none}
+dialog,textarea{touch-action:pan-y;overscroll-behavior:contain}
+#board-title{font-size:16px}
+.text-controls{display:flex;align-items:center;gap:12px;min-height:40px}
+.text-controls>label{font-size:12px;font-weight:600;color:#516d59}
+.text-controls input[type="range"]{width:150px;flex:1;min-width:60px}
+.text-controls input[type="number"]{width:60px;min-height:38px;border:1px solid #dae3d4;border-radius:8px;background:#f3f6ef;color:#2c4f3b;text-align:center;font-size:16px;padding:4px}
+.font-limit{font-size:10px;color:#788573;min-width:45px;text-align:right;white-space:nowrap}
+.has-text-controls .property-line{justify-content:center}
+.has-text-controls .thickness,.has-text-controls .smooth-button,.has-text-controls .property-separator{display:none}
+.has-text-controls .text-controls{border-top:1px solid var(--line);padding-top:6px}
+@media(max-width:700px){
+  #board-title{font-size:16px;line-height:20px}
+  .bottom-bar,body[data-tool] .bottom-bar{bottom:calc(max(12px,env(safe-area-inset-bottom)) + 78px + var(--properties-height,96px))}
+  .text-controls{gap:9px;min-height:44px}.text-controls input[type="range"]{width:100%;min-width:40px}
+  .text-controls input[type="number"]{width:54px}.font-limit{min-width:42px}
+}

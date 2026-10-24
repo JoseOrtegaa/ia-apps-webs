@@ -1,0 +1,57 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><title>Pizarra · Comprobación del borrador</title>
+<style>body{font:15px system-ui;color:#293b33;background:#f4f6ef;max-width:920px;margin:36px auto;padding:0 18px}h1{font-size:28px;margin-bottom:8px}p{color:#647561}section{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0}figure{margin:0;background:#fffefa;border:1px solid #dbe3d6;border-radius:14px;padding:16px}canvas{width:100%;display:block}figcaption{font-weight:600}pre{white-space:pre-wrap;line-height:1.9;background:#e7efe0;padding:18px;border-radius:12px}#download{color:#235d4b}</style>
+<h1>Borrado del resaltador</h1><p>El borrador elimina la zona central; las partes que quedan conservan el mismo color y suavizado.</p>
+<section id="compare"></section><pre id="result">Comprobando…</pre><a id="download" download="pizarra-borrador-corregido.png" hidden>Descargar comparación PNG</a>
+<script type="module">
+import {COLORS,eraseStroke,strokeParts,validateBoard,emptyBoard} from '../model.js';
+import {renderItem,svg,exportSVG} from '../render.js';
+const report=document.querySelector('#result'),compare=document.querySelector('#compare');report.textContent='';
+const check=(ok,label)=>{report.textContent+=(ok?'✓ ':'✗ ')+label+'\n';if(!ok)throw Error(label);};
+const raster=async(source,width,height)=>{
+ const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+ const image=new Image(),url=URL.createObjectURL(new Blob([source],{type:'image/svg+xml'}));
+ try{await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=url;});canvas.getContext('2d').drawImage(image,0,0,width,height);}finally{URL.revokeObjectURL(url);}return canvas;
+};
+const draw=async items=>{
+ const root=svg('svg',{xmlns:'http://www.w3.org/2000/svg',width:400,height:180,viewBox:'0 0 400 180'});
+ root.append(svg('rect',{width:400,height:180,fill:'#fffefa'}));items.forEach(item=>root.append(renderItem(item)));
+ return raster(new XMLSerializer().serializeToString(root),400,180);
+};
+const pixel=(canvas,x,y)=>Array.from(canvas.getContext('2d').getImageData(x,y,1,1).data);
+const equal=(a,b)=>a.every((v,i)=>Math.abs(v-b[i])<=1);
+try{
+ for(const opacity of [.28,.65,1]){
+  const original={id:'repro',type:'stroke',color:COLORS[4],width:40,opacity,smooth:false,points:[{x:40,y:72},{x:360,y:72},{x:40,y:82},{x:360,y:82},{x:40,y:94},{x:360,y:94}]};
+  const erased=eraseStroke(original,{x:200,y:82},16),before=await draw([original]),after=await draw(erased);
+  check(erased.length===1&&strokeParts(erased[0]).length>1,`Opacidad ${opacity}: las partes conservan un único trazo`);
+  check(equal(pixel(before,80,82),pixel(after,80,82))&&equal(pixel(before,320,82),pixel(after,320,82)),`Opacidad ${opacity}: el color no se oscurece fuera del borrado`);
+  check(equal(pixel(after,200,82),[255,254,250,255]),`Opacidad ${opacity}: la zona central está borrada`);
+  if(opacity===.28){
+   for(const [name,canvas] of [['Antes de borrar',before],['Después de borrar',after]]){const figure=document.createElement('figure'),caption=document.createElement('figcaption');caption.textContent=name;figure.append(caption,canvas);compare.append(figure);}
+   const restored=validateBoard({...emptyBoard(),items:JSON.parse(JSON.stringify(erased))}).items,again=await draw(restored);
+   check(equal(pixel(after,80,82),pixel(again,80,82))&&equal(pixel(after,200,82),pixel(again,200,82)),'Guardar y abrir mantiene el borrado y la transparencia');
+   const exported=exportSVG(restored),png=await raster(exported.source,exported.width,exported.height);
+   check(png.width>0&&pixel(png,80,80)[3]===255,'La exportación PNG incluye el trazo corregido');
+   const download=document.querySelector('#download'),proof=document.createElement('canvas');proof.width=800;proof.height=180;proof.getContext('2d').drawImage(before,0,0);proof.getContext('2d').drawImage(after,400,0);download.href=proof.toDataURL('image/png');download.hidden=false;
+  }
+ }
+ const curve={id:'curve',type:'stroke',color:COLORS[2],width:14,opacity:.28,smooth:true,points:[{x:40,y:80},{x:100,y:0},{x:160,y:150},{x:220,y:80},{x:350,y:80}]};
+ const before=await draw([curve]),after=await draw(eraseStroke(curve,{x:310,y:80},12));
+ for(const [name,canvas] of [['Curva original',before],['Curva después de borrar',after]]){const figure=document.createElement('figure'),caption=document.createElement('figcaption');caption.textContent=name;figure.append(caption,canvas);compare.append(figure);}
+ const a=before.getContext('2d').getImageData(0,0,250,180).data,b=after.getContext('2d').getImageData(0,0,250,180).data;
+ // SVG curves and their dense line approximation can rasterize edge pixels differently.
+ // Require identical interiors and no change beyond a one-pixel antialiasing boundary.
+ let changedInterior=0;
+ for(let y=1;y<179;y++)for(let x=1;x<249;x++){
+  const i=(y*250+x)*4;if(Math.max(...[0,1,2].map(c=>Math.abs(a[i+c]-b[i+c])))<=5)continue;
+  let edge=false;
+  for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+   const j=((y+dy)*250+x+dx)*4;
+   if(Math.max(...[0,1,2].map(c=>Math.abs(a[i+c]-a[j+c])))>5)edge=true;
+  }
+  if(!edge)changedInterior++;
+ }
+ check(changedInterior===0,`La curva conserva su forma y color fuera del borrado (${changedInterior} cambios fuera del borde de 1 px)`);
+ report.textContent+='\n12 comprobaciones visuales correctas.';
+}catch(error){report.textContent+='\nERROR: '+error.message;}
+</script></html>

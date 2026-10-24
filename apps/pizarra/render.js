@@ -1,4 +1,4 @@
-import { bounds, isPath, allBounds } from './model.js';
+import { bounds, isPath, allBounds, strokeParts } from './model.js';
 import { layoutText, maximumFontSize } from './text-layout.js';
 export const NS = 'http://www.w3.org/2000/svg';
 export function svg(tag, attributes = {}, text) {
@@ -58,7 +58,7 @@ export function renderItem(item) {
   const group = svg('g', { 'data-id': item.id, opacity: item.opacity, fill: 'none', stroke: item.color, 'stroke-width': item.width, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
   group.append(svg('title', {}, isPath(item) ? 'Trazo' : item.text || item.kind));
   if (isPath(item)) {
-    group.append(svg('path', { d: pathData(item.points, item.smooth) }));
+    group.append(svg('path', { d: strokeParts(item).map(points => pathData(points, item.smooth)).join('') }));
     if (item.type === 'arrow' && item.points.length > 1) {
       const tip = item.points.at(-1), prev = item.points.at(-2), angle = Math.atan2(tip.y - prev.y, tip.x - prev.x), size = Math.max(14, item.width * 3);
       group.append(svg('path', { d: `M${tip.x - Math.cos(angle - .48) * size} ${tip.y - Math.sin(angle - .48) * size}L${tip.x} ${tip.y}L${tip.x - Math.cos(angle + .48) * size} ${tip.y - Math.sin(angle + .48) * size}` }));

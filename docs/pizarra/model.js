@@ -15,6 +15,9 @@ export function resizedObject(item, width, height) {
   return { ...item, w, h, fontSize: clamp(fontSizeFor(item) * scale, FONT.min, FONT.max) };
 }
 export const isPath = item => ['stroke', 'line', 'arrow'].includes(item.type);
+// Disconnected remnants still belong to one stroke and share a single opacity pass.
+export const strokeParts = item => [item.points, ...(item.parts || [])];
+export const pointCount = item => isPath(item) ? strokeParts(item).reduce((n, points) => n + points.length, 0) : 0;
 export const emptyBoard = () => ({ version: 1, title: 'Mi pizarra', items: [] });
 export function segmentDistance(p, a, b) {
   const length2 = (b.x - a.x) ** 2 + (b.y - a.y) ** 2;
@@ -53,10 +56,12 @@ export function finishStroke(points, smooth, zoom = 1) {
 }
 export function bounds(item) {
   if (!isPath(item)) return { x: item.x, y: item.y, w: item.w, h: item.h };
-  const xs = item.points.map(p => p.x), ys = item.points.map(p => p.y);
+  let left=Infinity, top=Infinity, right=-Infinity, bottom=-Infinity;
+  for (const points of strokeParts(item)) for (const p of points) {
+    left=Math.min(left,p.x);top=Math.min(top,p.y);right=Math.max(right,p.x);bottom=Math.max(bottom,p.y);
+  }
   const margin = item.type === 'arrow' ? Math.max(14, item.width * 3) : item.width / 2;
-  const x = Math.min(...xs) - margin, y = Math.min(...ys) - margin;
-  return { x, y, w: Math.max(...xs) - x + margin, h: Math.max(...ys) - y + margin };
+  return { x: left-margin, y: top-margin, w: right-left+margin*2, h: bottom-top+margin*2 };
 }
 export function allBounds(items) {
   if (!items.length) return { x: 0, y: 0, w: 800, h: 600 };
@@ -65,36 +70,75 @@ export function allBounds(items) {
 }
 export function hitTest(item, p, tolerance = 8) {
   if (isPath(item)) {
-    if (item.points.length === 1) return distance(p, item.points[0]) <= tolerance + item.width / 2;
-    return item.points.some((point, i) => i && segmentDistance(p, item.points[i - 1], point) <= tolerance + item.width / 2);
+    return strokeParts(item).some(points => points.length === 1
+      ? distance(p, points[0]) <= tolerance + item.width / 2
+      : points.some((point, i) => i && segmentDistance(p, points[i - 1], point) <= tolerance + item.width / 2));
   }
   return p.x >= item.x - tolerance && p.x <= item.x + item.w + tolerance && p.y >= item.y - tolerance && p.y <= item.y + item.h + tolerance;
 }
 export function translated(item, dx, dy) {
-  return isPath(item) ? { ...item, points: item.points.map(p => ({ x: p.x + dx, y: p.y + dy })) } : { ...item, x: item.x + dx, y: item.y + dy };
+  if (!isPath(item)) return { ...item, x: item.x + dx, y: item.y + dy };
+  const move = points => points.map(p => ({ x: p.x + dx, y: p.y + dy }));
+  return { ...item, points: move(item.points), ...(item.parts ? { parts: item.parts.map(move) } : {}) };
 }
-// Split vector strokes at exact circle intersections; erased portions remain editable gaps.
-export function eraseStroke(item, center, radius) {
-  const r = radius + item.width / 2, points = item.points;
-  if (points.length === 1) return distance(points[0], center) <= r ? [] : [item];
-  const pieces = []; let current = [], changed = false;
-  const flush = () => { if (current.length) pieces.push(current); current = []; };
-  for (let i = 1; i < points.length; i++) {
-    const a = points[i - 1], b = points[i], dx = b.x - a.x, dy = b.y - a.y;
-    const A = dx * dx + dy * dy, B = 2 * ((a.x - center.x) * dx + (a.y - center.y) * dy);
-    const C = (a.x - center.x) ** 2 + (a.y - center.y) ** 2 - r * r, D = B * B - 4 * A * C;
-    const ts = [0, 1];
-    if (A && D > 0) for (const t of [(-B - Math.sqrt(D)) / (2 * A), (-B + Math.sqrt(D)) / (2 * A)]) if (t > 0 && t < 1) ts.push(t);
-    ts.sort((u, v) => u - v);
-    for (let j = 1; j < ts.length; j++) {
-      const point = t => ({ x: a.x + dx * t, y: a.y + dy * t });
-      if (distance(point((ts[j - 1] + ts[j]) / 2), center) < r) { changed = true; flush(); }
-      else { if (!current.length) current.push(point(ts[j - 1])); current.push(point(ts[j])); }
-    }
+// Match the quadratic curves used by render.js before cutting them. Retaining the
+// control polygon instead would straighten every surviving curve after the first erase.
+const flattened = new WeakMap();
+export function flattenStroke(points) {
+  if (points.length < 3) return points;
+  if (flattened.has(points)) return flattened.get(points);
+  const curves=[];let a=points[0],stepsTotal=0;
+  for(let i=1;i<points.length-1;i++){
+    const c=points[i],next=points[i+1],b={x:(c.x+next.x)/2,y:(c.y+next.y)/2};
+    const steps=Math.max(1,Math.ceil(Math.sqrt(Math.hypot(a.x-2*c.x+b.x,a.y-2*c.y+b.y)/.08)));
+    curves.push({a,c,b,steps});stepsTotal+=steps;a=b;
   }
-  flush();
+  // Keep imported and edited strokes within the same per-part point budget.
+  const extraScale=Math.min(1,(11998-curves.length)/Math.max(1,stepsTotal-curves.length));
+  const result=[points[0]];
+  for(const {a,c,b,steps} of curves){
+    const n=1+Math.floor((steps-1)*extraScale);
+    for(let j=1;j<=n;j++){const t=j/n,u=1-t;result.push({x:u*u*a.x+2*u*t*c.x+t*t*b.x,y:u*u*a.y+2*u*t*c.y+t*t*b.y});}
+  }
+  result.push(points.at(-1));flattened.set(points,result);return result;
+}
+// Cut at exact circle intersections, keeping all remnants in ONE compound path.
+// Splitting translucent strokes into separate elements darkens their overlaps.
+export function eraseStroke(item, center, radius) {
+  const r = radius + item.width / 2, pieces = []; let changed = false;
+  for (const original of strokeParts(item)) {
+    const points = item.smooth ? flattenStroke(original) : original;
+    if (points.length === 1) {
+      if (distance(points[0], center) <= r) changed = true; else pieces.push(points);
+      continue;
+    }
+    let current=[];
+    const flush=()=>{if(current.length)pieces.push(current);current=[];};
+    for (let i = 1; i < points.length; i++) {
+      const a = points[i - 1], b = points[i], dx = b.x - a.x, dy = b.y - a.y;
+      const A = dx * dx + dy * dy, B = 2 * ((a.x - center.x) * dx + (a.y - center.y) * dy);
+      const C = (a.x - center.x) ** 2 + (a.y - center.y) ** 2 - r * r, D = B * B - 4 * A * C;
+      const ts = [0, 1];
+      if (A && D > 0) for (const t of [(-B - Math.sqrt(D)) / (2 * A), (-B + Math.sqrt(D)) / (2 * A)]) if (t > 0 && t < 1) ts.push(t);
+      ts.sort((u, v) => u - v);
+      for (let j = 1; j < ts.length; j++) {
+        const point = t => ({ x: a.x + dx * t, y: a.y + dy * t });
+        if (distance(point((ts[j - 1] + ts[j]) / 2), center) < r) { changed = true; flush(); }
+        else { if (!current.length) current.push(point(ts[j - 1])); current.push(point(ts[j])); }
+      }
+    }
+    flush();
+  }
   if (!changed) return [item];
-  return pieces.map((piece, i) => ({ ...item, id: i ? uid() : item.id, type: 'stroke', smooth: false, points: piece }));
+  if (!pieces.length) return [];
+  // Adjacent chunks share an endpoint; they render as one paint operation too.
+  const chunks=pieces.flatMap(points=>{
+    const result=[];
+    for(let start=0;start<points.length;start+=11999){result.push(points.slice(start,start+12000));if(start+12000>=points.length)break;}
+    return result;
+  });
+  const [points,...parts]=chunks;
+  return [{ ...item, smooth: false, points, parts }];
 }
 export function validateBoard(value) {
   const bad = () => { throw new Error('El archivo no es una pizarra válida de Koi.'); };
@@ -105,8 +149,13 @@ export function validateBoard(value) {
     if (!item || !COLORS.includes(item.color) || !num(item.width, .1, 160) || !num(item.opacity, .05, 1)) bad();
     const base = { id: uid(), type: item.type, color: item.color, width: item.width, opacity: item.opacity };
     if (isPath(item)) {
-      if (!Array.isArray(item.points) || !item.points.length || item.points.length > 12000 || (count += item.points.length) > LIMITS.points) bad();
-      return { ...base, smooth: !!item.smooth, points: item.points.map(p => { if (!p || !num(p.x) || !num(p.y)) bad(); return { x: p.x, y: p.y }; }) };
+      if (item.parts !== undefined && (item.type !== 'stroke' || !Array.isArray(item.parts) || item.parts.length > LIMITS.points)) bad();
+      const cleanPoints = points => {
+        if (!Array.isArray(points) || !points.length || points.length > 12000 || (count += points.length) > LIMITS.points) bad();
+        return points.map(p => { if (!p || !num(p.x) || !num(p.y)) bad(); return { x: p.x, y: p.y }; });
+      };
+      const points=cleanPoints(item.points),parts=item.parts?.map(cleanPoints);
+      return { ...base, smooth: !!item.smooth, points, ...(parts ? { parts } : {}) };
     }
     if (item.type !== 'object' || !KINDS.includes(item.kind) || !num(item.x) || !num(item.y) || !num(item.w, 24, 2000) || !num(item.h, 24, 2000) || typeof item.text !== 'string' || item.text.length > 500) bad();
     if (item.fontSize !== undefined && !num(item.fontSize, FONT.min, FONT.max)) bad();

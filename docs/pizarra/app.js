@@ -1,4 +1,4 @@
-import { COLORS, LIMITS, uid, clamp, distance, FONT, resizedObject, isPath, emptyBoard, finishStroke, bounds, allBounds, hitTest, translated, eraseStroke, validateBoard, History, createObject, exampleBoard } from './model.js';
+import { COLORS, LIMITS, uid, clamp, distance, FONT, resizedObject, isPath, emptyBoard, finishStroke, bounds, allBounds, hitTest, translated, eraseStroke, pointCount, validateBoard, History, createObject, exampleBoard } from './model.js';
 import { renderItem, renderSelection, exportSVG, textMetrics, textSizeLimit, measureLabel } from './render.js';
 import { sizeFreeText } from './text-layout.js';
 import { VIEW, worldPoint, zoomCamera, startPinch, pinchCamera, installPageZoomGuard } from './viewport.js';
@@ -93,7 +93,7 @@ function save(){
   try {localStorage.setItem(STORAGE,JSON.stringify({...board,camera}));dirty=false;storageFailed=false;$('save-indicator').classList.remove('unsaved');$('save-indicator').title='Guardado en este navegador';$('save-indicator').setAttribute('aria-label','Guardado en este navegador');}
   catch {if(!storageFailed)toast('No se pudo guardar aquí. Exporta una copia editable.');storageFailed=true;$('save-indicator').title='Sin guardar: descarga una copia';$('save-indicator').setAttribute('aria-label','Sin guardar: descarga una copia');}
 }
-function withinLimits(){return board.items.length<=LIMITS.items&&board.items.reduce((n,i)=>n+(i.points?.length||0),0)<=LIMITS.points&&new Blob([JSON.stringify(board)]).size<=LIMITS.file;}
+function withinLimits(){return board.items.length<=LIMITS.items&&board.items.reduce((n,i)=>n+pointCount(i),0)<=LIMITS.points&&new Blob([JSON.stringify(board)]).size<=LIMITS.file;}
 function commit(){
   if(!withinLimits()){board=JSON.parse(history.entries[history.index]);selected=null;toast('Esta pizarra está llena. Guarda una copia y empieza otra.');scheduleRender();return;}
   if(history.push(board))changed();scheduleRender();
